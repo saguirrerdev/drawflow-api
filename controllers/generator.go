@@ -41,6 +41,8 @@ type Data struct {
 	Condition string `json:"condition,omitempty"`
 	Then      string `json:"then,omitempty"`
 	Else      string `json:"else,omitempty"`
+	From      string `json:"from,omitempty"`
+	Till      string `json:"till,omitempty"`
 }
 type ConnectionsInput struct {
 	Node  string `json:"node,omitempty"`
@@ -130,7 +132,7 @@ func addGenerator(node Node) string {
 		log.Fatal(err)
 	}
 
-	return fmt.Sprintf("add%v = %s + %s", node.ID, nodeVarName(id1), nodeVarName(id2))
+	return fmt.Sprintf("add%v = %s + %s\n", node.ID, nodeVarName(id1), nodeVarName(id2))
 }
 
 func getNodeCode(node Node) string {
@@ -145,6 +147,8 @@ func getNodeCode(node Node) string {
 		text = condicionalGenerator(node)
 	case "Df_print":
 		text = fmt.Sprintf("msg%v = \"%s\"", node.ID, node.Data.Value)
+	case "Df_for":
+		text = forGenerator(node)
 	}
 	return text
 }
@@ -161,6 +165,10 @@ func condicionalGenerator(node Node) string {
 	}
 
 	return fmt.Sprintf("if %s:\n    %s\nelse:\n    %s", node.Data.Condition, nodeVarName(thenId), nodeVarName(elseId))
+}
+
+func forGenerator(node Node) string {
+	return fmt.Sprintf("for i in range(%s,%s):\n    %s\n", node.Data.From, node.Data.Till, "print(\"Hello world\")")
 }
 
 func nodeVarName(id int) string {
