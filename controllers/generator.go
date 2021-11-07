@@ -37,7 +37,10 @@ type Nodes []struct {
 	PosY     int     `json:"pos_y,omitempty"`
 }
 type Data struct {
-	Value string `json:"value,omitempty"`
+	Value     string `json:"value,omitempty"`
+	Condition string `json:"condition,omitempty"`
+	Then      string `json:"then,omitempty"`
+	Else      string `json:"else,omitempty"`
 }
 type ConnectionsInput struct {
 	Node  string `json:"node,omitempty"`
@@ -84,9 +87,6 @@ type Code struct {
 var nodes Nodes
 
 func GetCode(w http.ResponseWriter, r *http.Request) {
-	// Assume if we've reach this far, we can access the node
-	// context because this handler is a child of the NodeCtx
-	// middleware. The worst case, the recoverer middleware will save us.
 	node := r.Context().Value("node").(*models.Node)
 
 	json.Unmarshal([]byte(node.Nodes), &nodes)
@@ -94,11 +94,6 @@ func GetCode(w http.ResponseWriter, r *http.Request) {
 	code := Code{Code: generate("", 0), Name: node.Name}
 
 	render.Render(w, r, CodeResponse(code))
-
-	// if err := render.Render(w, r, NewNodeResponse(node)); err != nil {
-	// 	render.Render(w, r, error_handler.ErrRender(err))
-	// 	return
-	// }
 }
 
 func CodeResponse(code Code) *Code {
@@ -116,15 +111,8 @@ func generate(code string, pos int) string {
 		return code
 	}
 
-	text := ""
 	el := nodes[pos]
-
-	switch nodeType := el.HTML; nodeType {
-	case "Df_add":
-		text = addGenerator(el)
-	case "Df_number":
-		text = fmt.Sprintf("%s = int(%s)", nodeVarName(el.ID), el.Data.Value)
-	}
+	text := getNodeCode(el)
 
 	code += text + "\n"
 
@@ -145,6 +133,36 @@ func addGenerator(node Node) string {
 	return fmt.Sprintf("add%v = %s + %s", node.ID, nodeVarName(id1), nodeVarName(id2))
 }
 
+func getNodeCode(node Node) string {
+	text := ""
+
+	switch nodeType := node.HTML; nodeType {
+	case "Df_add":
+		text = addGenerator(node)
+	case "Df_number":
+		text = fmt.Sprintf("%s = int(%s)", nodeVarName(node.ID), node.Data.Value)
+	case "Df_conditional":
+		text = condicionalGenerator(node)
+	case "Df_print":
+		text = fmt.Sprintf("msg%v = \"%s\"", node.ID, node.Data.Value)
+	}
+	return text
+}
+
+func condicionalGenerator(node Node) string {
+	thenId, err := strconv.Atoi(node.Outputs.Output1.Connections[0].Node)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	elseId, err := strconv.Atoi(node.Outputs.Output2.Connections[0].Node)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return fmt.Sprintf("if %s:\n    %s\nelse:\n    %s", node.Data.Condition, nodeVarName(thenId), nodeVarName(elseId))
+}
+
 func nodeVarName(id int) string {
 	el := getNodeById(id)
 	text := ""
@@ -153,6 +171,8 @@ func nodeVarName(id int) string {
 		text = fmt.Sprintf("add%v", el.ID)
 	case "Df_number":
 		text = fmt.Sprintf("number%v", el.ID)
+	case "Df_print":
+		text = fmt.Sprintf("print(msg%v)", el.ID)
 	}
 	return text
 }
