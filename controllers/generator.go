@@ -3,59 +3,85 @@ package node
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/render"
-	"github.com/zebek95/draflow-api/error_handler"
 	"github.com/zebek95/draflow-api/models"
 )
 
-type Df struct {
-	Drawflow []DfModule `json:"drawflow"`
+type Node struct {
+	ID       int     `json:"id,omitempty"`
+	Name     string  `json:"name,omitempty"`
+	Data     Data    `json:"data,omitempty"`
+	Class    string  `json:"class,omitempty"`
+	HTML     string  `json:"html,omitempty"`
+	Typenode string  `json:"typenode,omitempty"`
+	Inputs   Inputs  `json:"inputs,omitempty"`
+	Outputs  Outputs `json:"outputs,omitempty"`
+	PosX     int     `json:"pos_x,omitempty"`
+	PosY     int     `json:"pos_y,omitempty"`
 }
 
-type DfModule struct {
-	Home []DfNode `json:"Home"`
+type Nodes []struct {
+	ID       int     `json:"id,omitempty"`
+	Name     string  `json:"name,omitempty"`
+	Data     Data    `json:"data,omitempty"`
+	Class    string  `json:"class,omitempty"`
+	HTML     string  `json:"html,omitempty"`
+	Typenode string  `json:"typenode,omitempty"`
+	Inputs   Inputs  `json:"inputs,omitempty"`
+	Outputs  Outputs `json:"outputs,omitempty"`
+	PosX     int     `json:"pos_x,omitempty"`
+	PosY     int     `json:"pos_y,omitempty"`
+}
+type Data struct {
+	Value string `json:"value,omitempty"`
+}
+type ConnectionsInput struct {
+	Node  string `json:"node,omitempty"`
+	Input string `json:"input,omitempty"`
+}
+type Input1 struct {
+	Connections []ConnectionsInput `json:"connections,omitempty"`
+}
+type Input2 struct {
+	Connections []ConnectionsInput `json:"connections,omitempty"`
+}
+type Input3 struct {
+	Connections []ConnectionsInput `json:"connections,omitempty"`
+}
+type Inputs struct {
+	Input1 Input1 `json:"input_1,omitempty"`
+	Input2 Input2 `json:"input_2,omitempty"`
+	Input3 Input3 `json:"input_3,omitempty"`
+}
+type ConnectionsOutput struct {
+	Node   string `json:"node,omitempty"`
+	Output string `json:"output,omitempty"`
+}
+type Output1 struct {
+	Connections []ConnectionsOutput `json:"connections,omitempty"`
+}
+type Output2 struct {
+	Connections []ConnectionsOutput `json:"connections,omitempty"`
+}
+type Output3 struct {
+	Connections []ConnectionsOutput `json:"connections,omitempty"`
+}
+type Outputs struct {
+	Output1 Output1 `json:"output_1,omitempty"`
+	Output2 Output2 `json:"output_2,omitempty"`
+	Output3 Output3 `json:"output_3,omitempty"`
 }
 
-type DfNode struct {
-	Id       int         `json:"id"`
-	Name     string      `json:"name"`
-	Data     DfData      `json:"data"`
-	Class    string      `json:"class"`
-	Typenode string      `json:"typenode"`
-	Html     string      `json:"html"`
-	PosX     int         `json:"pos_x"`
-	PosY     int         `json:"pos_y"`
-	Inputs   []DfInputs  `json:"inputs"`
-	Outputs  []DfOutputs `json:"outputs"`
+type Code struct {
+	Name string `json:"name"`
+	Code string `json:"code"`
 }
 
-type DfData struct {
-	Value string `json:"value"`
-}
-
-type DfOutputs struct {
-	Output1 []DfConnectionOutput `json:"output_1"`
-	Output2 []DfConnectionOutput `json:"output_2"`
-	Output3 []DfConnectionOutput `json:"output_3"`
-}
-
-type DfConnectionOutput struct {
-	Node   string `json:"node"`
-	Output string `json:"output"`
-}
-
-type DfInputs struct {
-	Input1 []DfConnectionInput `json:"input_1"`
-	Input2 []DfConnectionInput `json:"input_2"`
-	Input3 []DfConnectionInput `json:"input_3"`
-}
-
-type DfConnectionInput struct {
-	Node  string `json:"node"`
-	Input string `json:"input"`
-}
+var nodes Nodes
 
 func GetCode(w http.ResponseWriter, r *http.Request) {
 	// Assume if we've reach this far, we can access the node
@@ -63,21 +89,83 @@ func GetCode(w http.ResponseWriter, r *http.Request) {
 	// middleware. The worst case, the recoverer middleware will save us.
 	node := r.Context().Value("node").(*models.Node)
 
-	var data Df
+	json.Unmarshal([]byte(node.Nodes), &nodes)
 
-	json.Unmarshal([]byte(node.Data), &data)
+	code := Code{Code: generate("", 0), Name: node.Name}
 
-	fmt.Println(node.Data)
+	render.Render(w, r, CodeResponse(code))
 
-	if err := render.Render(w, r, NewNodeResponse(node)); err != nil {
-		render.Render(w, r, error_handler.ErrRender(err))
-		return
-	}
+	// if err := render.Render(w, r, NewNodeResponse(node)); err != nil {
+	// 	render.Render(w, r, error_handler.ErrRender(err))
+	// 	return
+	// }
 }
 
-func generate(data map[string]interface{}) string {
-	fmt.Println(data)
-	module := data["drawflow"]
-	fmt.Println(module)
-	return ""
+func CodeResponse(code Code) *Code {
+	resp := code
+	return &resp
+}
+
+func (rd Code) Render(w http.ResponseWriter, r *http.Request) error {
+	return nil
+}
+
+func generate(code string, pos int) string {
+
+	if pos > len(nodes)-1 {
+		return code
+	}
+
+	text := ""
+	el := nodes[pos]
+
+	switch nodeType := el.HTML; nodeType {
+	case "Df_add":
+		text = addGenerator(el)
+	case "Df_number":
+		text = fmt.Sprintf("%s = int(%s)", nodeVarName(el.ID), el.Data.Value)
+	}
+
+	code += text + "\n"
+
+	return generate(code, pos+1)
+}
+
+func addGenerator(node Node) string {
+	id1, err := strconv.Atoi(node.Inputs.Input1.Connections[0].Node)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	id2, err := strconv.Atoi(node.Inputs.Input2.Connections[0].Node)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return fmt.Sprintf("add%v = %s + %s", node.ID, nodeVarName(id1), nodeVarName(id2))
+}
+
+func nodeVarName(id int) string {
+	el := getNodeById(id)
+	text := ""
+	switch nodeType := el.HTML; nodeType {
+	case "Df_add":
+		text = fmt.Sprintf("add%v", el.ID)
+	case "Df_number":
+		text = fmt.Sprintf("number%v", el.ID)
+	}
+	return text
+}
+
+func getNodeById(id int) Node {
+
+	var node Node
+
+	for _, v := range nodes {
+		if v.ID == id {
+			node = v
+		}
+	}
+
+	return node
 }

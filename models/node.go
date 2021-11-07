@@ -20,6 +20,7 @@ type Node struct {
 	Uid   string   `json:"uid"`
 	Name  string   `json:"name"`
 	Data  string   `json:"data"`
+	Nodes string   `json:"nodes"`
 	DType []string `json:"dgraph.type"`
 }
 
@@ -69,6 +70,7 @@ func DbGetNode(id string) (*Node, error) {
 				uid
 				name
 				data
+				nodes
 				dgraph.type
 			}
 		}
@@ -95,6 +97,7 @@ func DbGetNodes() (*NodeResponse, error) {
 				uid
 				name
 				data
+				nodes
 				dgraph.type
 			}
 		}

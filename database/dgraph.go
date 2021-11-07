@@ -45,10 +45,12 @@ func SetSchema(c *dgo.Dgraph) {
 		Schema: `
 			name: string .
 			data: string .
+			nodes: string .
 
 			type Node {
 				name
 				data
+				nodes
 			}
 		`,
 	})
