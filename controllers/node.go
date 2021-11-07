@@ -68,10 +68,6 @@ func CreateNode(w http.ResponseWriter, r *http.Request) {
 	render.Render(w, r, NewNodeResponse(node))
 }
 
-// GetNode returns the specific Node. You'll notice it just
-// fetches the Node right off the context, as its understood that
-// if we made it this far, the Node must be on the context. In case
-// its not due to a bug, then it will panic, and our Recoverer will save us.
 func GetNode(w http.ResponseWriter, r *http.Request) {
 	// Assume if we've reach this far, we can access the node
 	// context because this handler is a child of the NodeCtx
@@ -84,7 +80,6 @@ func GetNode(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// UpdateNode updates an existing Node in our persistent store.
 func UpdateNode(w http.ResponseWriter, r *http.Request) {
 	node := r.Context().Value("node").(*models.Node)
 
@@ -99,13 +94,9 @@ func UpdateNode(w http.ResponseWriter, r *http.Request) {
 	render.Render(w, r, NewNodeResponse(node))
 }
 
-// DeleteNode removes an existing Node from our persistent store.
 func DeleteNode(w http.ResponseWriter, r *http.Request) {
 	var err error
 
-	// Assume if we've reach this far, we can access the node
-	// context because this handler is a child of the NodeCtx
-	// middleware. The worst case, the recoverer middleware will save us.
 	node := r.Context().Value("node").(*models.Node)
 
 	// node, err = models.DbRemoveNode(node.ID)
@@ -117,8 +108,6 @@ func DeleteNode(w http.ResponseWriter, r *http.Request) {
 	render.Render(w, r, NewNodeResponse(node))
 }
 
-// This is entirely optional, but I wanted to demonstrate how you could easily
-// add your own logic to the render.Respond method.
 func init() {
 	render.Respond = func(w http.ResponseWriter, r *http.Request, v interface{}) {
 		if err, ok := v.(error); ok {
@@ -141,9 +130,3 @@ func init() {
 		render.DefaultResponder(w, r, v)
 	}
 }
-
-// NOTE: as a thought, the request and response payloads for an Node could be the
-// same payload type, perhaps will do an example with it as well.
-// type NodePayload struct {
-//   *Node
-// }

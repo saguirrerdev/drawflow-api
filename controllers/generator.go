@@ -48,37 +48,25 @@ type ConnectionsInput struct {
 	Node  string `json:"node,omitempty"`
 	Input string `json:"input,omitempty"`
 }
-type Input1 struct {
-	Connections []ConnectionsInput `json:"connections,omitempty"`
-}
-type Input2 struct {
-	Connections []ConnectionsInput `json:"connections,omitempty"`
-}
-type Input3 struct {
+type Input struct {
 	Connections []ConnectionsInput `json:"connections,omitempty"`
 }
 type Inputs struct {
-	Input1 Input1 `json:"input_1,omitempty"`
-	Input2 Input2 `json:"input_2,omitempty"`
-	Input3 Input3 `json:"input_3,omitempty"`
+	Input1 Input `json:"input_1,omitempty"`
+	Input2 Input `json:"input_2,omitempty"`
+	Input3 Input `json:"input_3,omitempty"`
 }
 type ConnectionsOutput struct {
 	Node   string `json:"node,omitempty"`
 	Output string `json:"output,omitempty"`
 }
-type Output1 struct {
-	Connections []ConnectionsOutput `json:"connections,omitempty"`
-}
-type Output2 struct {
-	Connections []ConnectionsOutput `json:"connections,omitempty"`
-}
-type Output3 struct {
+type Output struct {
 	Connections []ConnectionsOutput `json:"connections,omitempty"`
 }
 type Outputs struct {
-	Output1 Output1 `json:"output_1,omitempty"`
-	Output2 Output2 `json:"output_2,omitempty"`
-	Output3 Output3 `json:"output_3,omitempty"`
+	Output1 Output `json:"output_1,omitempty"`
+	Output2 Output `json:"output_2,omitempty"`
+	Output3 Output `json:"output_3,omitempty"`
 }
 
 type Code struct {
@@ -91,11 +79,17 @@ var nodes Nodes
 func GetCode(w http.ResponseWriter, r *http.Request) {
 	node := r.Context().Value("node").(*models.Node)
 
-	json.Unmarshal([]byte(node.Nodes), &nodes)
+	err := json.Unmarshal([]byte(node.Nodes), &nodes)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	code := Code{Code: generate("", 0), Name: node.Name}
 
-	render.Render(w, r, CodeResponse(code))
+	err1 := render.Render(w, r, CodeResponse(code))
+	if err1 != nil {
+		log.Fatal(err1)
+	}
 }
 
 func CodeResponse(code Code) *Code {
@@ -142,11 +136,11 @@ func getNodeCode(node Node) string {
 	case "Df_add":
 		text = addGenerator(node)
 	case "Df_number":
-		text = fmt.Sprintf("%s = int(%s)", nodeVarName(node.ID), node.Data.Value)
+		text = fmt.Sprintf("%s = int(%v)", nodeVarName(node.ID), node.Data.Value)
 	case "Df_conditional":
 		text = condicionalGenerator(node)
 	case "Df_print":
-		text = fmt.Sprintf("msg%v = \"%s\"", node.ID, node.Data.Value)
+		text = fmt.Sprintf("msg%v = \"%v\"", node.ID, node.Data.Value)
 	case "Df_for":
 		text = forGenerator(node)
 	}
@@ -192,6 +186,7 @@ func getNodeById(id int) Node {
 	for _, v := range nodes {
 		if v.ID == id {
 			node = v
+			break
 		}
 	}
 

@@ -52,26 +52,22 @@ func main() {
 		panic("test")
 	})
 
-	// RESTy routes for "nodes" resource
 	r.Route("/nodes", func(r chi.Router) {
 		r.Get("/", node.ListNodes)
-		r.Post("/", node.CreateNode) // POST /nodes
+		r.Post("/", node.CreateNode)
 
 		r.Route("/{nodeID}", func(r chi.Router) {
-			r.Use(NodeCtx)                 // Load the *Node on the request context
-			r.Get("/", node.GetNode)       // GET /nodes/123
-			r.Get("/code", node.GetCode)   // GET /nodes/123
-			r.Put("/", node.UpdateNode)    // PUT /nodes/123
-			r.Delete("/", node.DeleteNode) // DELETE /nodes/123
+			r.Use(NodeCtx)
+			r.Get("/", node.GetNode)
+			r.Get("/code", node.GetCode)
+			r.Put("/", node.UpdateNode)
+			r.Delete("/", node.DeleteNode)
 		})
 	})
 
 	http.ListenAndServe(":3333", r)
 }
 
-// NodeCtx middleware is used to load an Node object from
-// the URL parameters passed through as the request. In case
-// the Node could not be found, we stop here and return a 404.
 func NodeCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var node *models.Node

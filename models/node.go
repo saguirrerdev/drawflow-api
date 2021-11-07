@@ -10,12 +10,6 @@ import (
 	"github.com/zebek95/draflow-api/database"
 )
 
-//--
-// Data model objects and persistence mocks:
-//--
-
-// Node data model. I suggest looking at https://upper.io for an easy
-// and powerful data persistence adapter.
 type Node struct {
 	Uid   string   `json:"uid"`
 	Name  string   `json:"name"`

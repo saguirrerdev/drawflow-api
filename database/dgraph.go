@@ -40,7 +40,6 @@ func NewClient() {
 }
 
 func SetSchema(c *dgo.Dgraph) {
-	// Set database schema
 	err := c.Alter(context.Background(), &api.Operation{
 		Schema: `
 			name: string .
@@ -61,8 +60,7 @@ func SetSchema(c *dgo.Dgraph) {
 }
 
 func reset(c *dgo.Dgraph) {
-	fmt.Println("Restaring database")
-	// Clean database
+	fmt.Println("Restarting database")
 	err := c.Alter(context.Background(), &api.Operation{
 		DropOp: api.Operation_ALL,
 	})
