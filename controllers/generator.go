@@ -115,6 +115,30 @@ func generate(code string, pos int) string {
 	return generate(code, pos+1)
 }
 
+func getNodeCode(node Node) string {
+	text := ""
+
+	switch nodeType := node.HTML; nodeType {
+	case "Df_add":
+		text = addGenerator(node)
+	case "Df_substraction":
+		text = substractionGenerator(node)
+	case "Df_divide":
+		text = divideGenerator(node)
+	case "Df_multiply":
+		text = multiplyGenerator(node)
+	case "Df_number":
+		text = fmt.Sprintf("%s = int(%v)", nodeVarName(node.ID), node.Data.Value)
+	case "Df_conditional":
+		text = condicionalGenerator(node)
+	case "Df_print":
+		text = fmt.Sprintf("msg%v = \"%v\"", node.ID, node.Data.Value)
+	case "Df_for":
+		text = forGenerator(node)
+	}
+	return text
+}
+
 func addGenerator(node Node) string {
 	id1, err := strconv.Atoi(node.Inputs.Input1.Connections[0].Node)
 	if err != nil {
@@ -129,22 +153,45 @@ func addGenerator(node Node) string {
 	return fmt.Sprintf("add%v = %s + %s\n", node.ID, nodeVarName(id1), nodeVarName(id2))
 }
 
-func getNodeCode(node Node) string {
-	text := ""
-
-	switch nodeType := node.HTML; nodeType {
-	case "Df_add":
-		text = addGenerator(node)
-	case "Df_number":
-		text = fmt.Sprintf("%s = int(%v)", nodeVarName(node.ID), node.Data.Value)
-	case "Df_conditional":
-		text = condicionalGenerator(node)
-	case "Df_print":
-		text = fmt.Sprintf("msg%v = \"%v\"", node.ID, node.Data.Value)
-	case "Df_for":
-		text = forGenerator(node)
+func divideGenerator(node Node) string {
+	id1, err := strconv.Atoi(node.Inputs.Input1.Connections[0].Node)
+	if err != nil {
+		log.Fatal(err)
 	}
-	return text
+
+	id2, err := strconv.Atoi(node.Inputs.Input2.Connections[0].Node)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return fmt.Sprintf("divide%v = %s / %s\n", node.ID, nodeVarName(id1), nodeVarName(id2))
+}
+func multiplyGenerator(node Node) string {
+	id1, err := strconv.Atoi(node.Inputs.Input1.Connections[0].Node)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	id2, err := strconv.Atoi(node.Inputs.Input2.Connections[0].Node)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return fmt.Sprintf("multiply%v = %s * %s\n", node.ID, nodeVarName(id1), nodeVarName(id2))
+}
+
+func substractionGenerator(node Node) string {
+	id1, err := strconv.Atoi(node.Inputs.Input1.Connections[0].Node)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	id2, err := strconv.Atoi(node.Inputs.Input2.Connections[0].Node)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return fmt.Sprintf("substraction%v = %s - %s\n", node.ID, nodeVarName(id1), nodeVarName(id2))
 }
 
 func condicionalGenerator(node Node) string {
@@ -171,6 +218,12 @@ func nodeVarName(id int) string {
 	switch nodeType := el.HTML; nodeType {
 	case "Df_add":
 		text = fmt.Sprintf("add%v", el.ID)
+	case "Df_substractionadd":
+		text = fmt.Sprintf("substraction%v", el.ID)
+	case "Df_divide":
+		text = fmt.Sprintf("divide%v", el.ID)
+	case "Df_multiply":
+		text = fmt.Sprintf("multiply%v", el.ID)
 	case "Df_number":
 		text = fmt.Sprintf("number%v", el.ID)
 	case "Df_print":
