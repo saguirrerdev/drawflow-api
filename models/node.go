@@ -6,7 +6,7 @@ import (
 	"log"
 	"reflect"
 
-	"github.com/dgraph-io/dgo/v200/protos/api"
+	"github.com/dgraph-io/dgo/v210/protos/api"
 	"github.com/zebek95/draflow-api/database"
 )
 
