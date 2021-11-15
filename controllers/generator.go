@@ -135,6 +135,10 @@ func getNodeCode(node Node) string {
 		text = fmt.Sprintf("msg%v = \"%v\"", node.ID, node.Data.Value)
 	case "Df_for":
 		text = forGenerator(node)
+	case "Df_code":
+		text = fmt.Sprintf("%s", node.Data.Value)
+	default:
+		text = "Node code no available"
 	}
 	return text
 }
