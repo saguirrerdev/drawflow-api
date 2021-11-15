@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -40,10 +41,6 @@ func main() {
 		ExposedHeaders: []string{"Link"},
 	}))
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("root."))
-	})
-
 	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("pong"))
 	})
@@ -63,6 +60,10 @@ func main() {
 			r.Delete("/", node.DeleteNode)
 		})
 	})
+
+	workDir, _ := os.Getwd()
+	fileServer := http.FileServer(http.Dir(filepath.Join(workDir, "app")))
+	r.Handle("/*", http.StripPrefix("/", fileServer))
 
 	http.ListenAndServe(fmt.Sprintf(":%s", os.Getenv("API_PORT")), r)
 }
