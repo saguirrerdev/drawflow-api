@@ -128,22 +128,25 @@ func getNodeCode(node Node) string {
 	case "Df_multiply":
 		text = multiplyGenerator(node)
 	case "Df_number":
-		text = fmt.Sprintf("%s = int(%v)", nodeVarName(node.ID), node.Data.Value)
+		text = fmt.Sprintf("%s = float(%v)", nodeVarName(node.ID), node.Data.Value)
 	case "Df_conditional":
 		text = condicionalGenerator(node)
-	case "Df_print":
-		text = fmt.Sprintf("msg%v = \"%v\"", node.ID, node.Data.Value)
 	case "Df_for":
 		text = forGenerator(node)
-	case "Df_code":
-		text = fmt.Sprintf("%s", node.Data.Value)
 	default:
-		text = "Node code no available"
+		text = ""
 	}
 	return text
 }
 
 func addGenerator(node Node) string {
+	var text string
+
+	if len(node.Inputs.Input1.Connections) <= 0 || len(node.Inputs.Input2.Connections) <= 0 {
+		text = ""
+		return text
+	}
+
 	id1, err := strconv.Atoi(node.Inputs.Input1.Connections[0].Node)
 	if err != nil {
 		log.Fatal(err)
@@ -154,10 +157,18 @@ func addGenerator(node Node) string {
 		log.Fatal(err)
 	}
 
-	return fmt.Sprintf("add%v = %s + %s\n", node.ID, nodeVarName(id1), nodeVarName(id2))
+	text = fmt.Sprintf("add%v = %s + %s\n", node.ID, nodeVarName(id1), nodeVarName(id2))
+	return text
 }
 
 func divideGenerator(node Node) string {
+	var text string
+
+	if len(node.Inputs.Input1.Connections) <= 0 || len(node.Inputs.Input2.Connections) <= 0 {
+		text = ""
+		return text
+	}
+
 	id1, err := strconv.Atoi(node.Inputs.Input1.Connections[0].Node)
 	if err != nil {
 		log.Fatal(err)
@@ -168,9 +179,18 @@ func divideGenerator(node Node) string {
 		log.Fatal(err)
 	}
 
-	return fmt.Sprintf("divide%v = %s / %s\n", node.ID, nodeVarName(id1), nodeVarName(id2))
+	text = fmt.Sprintf("divide%v = %s / %s\n", node.ID, nodeVarName(id1), nodeVarName(id2))
+	return text
 }
+
 func multiplyGenerator(node Node) string {
+	var text string
+
+	if len(node.Inputs.Input1.Connections) <= 0 || len(node.Inputs.Input2.Connections) <= 0 {
+		text = ""
+		return text
+	}
+
 	id1, err := strconv.Atoi(node.Inputs.Input1.Connections[0].Node)
 	if err != nil {
 		log.Fatal(err)
@@ -181,10 +201,18 @@ func multiplyGenerator(node Node) string {
 		log.Fatal(err)
 	}
 
-	return fmt.Sprintf("multiply%v = %s * %s\n", node.ID, nodeVarName(id1), nodeVarName(id2))
+	text = fmt.Sprintf("multiply%v = %s * %s\n", node.ID, nodeVarName(id1), nodeVarName(id2))
+	return text
 }
 
 func substractionGenerator(node Node) string {
+	var text string
+
+	if len(node.Inputs.Input1.Connections) <= 0 || len(node.Inputs.Input2.Connections) <= 0 {
+		text = ""
+		return text
+	}
+
 	id1, err := strconv.Atoi(node.Inputs.Input1.Connections[0].Node)
 	if err != nil {
 		log.Fatal(err)
@@ -195,25 +223,8 @@ func substractionGenerator(node Node) string {
 		log.Fatal(err)
 	}
 
-	return fmt.Sprintf("substraction%v = %s - %s\n", node.ID, nodeVarName(id1), nodeVarName(id2))
-}
-
-func condicionalGenerator(node Node) string {
-	thenId, err := strconv.Atoi(node.Outputs.Output1.Connections[0].Node)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	elseId, err := strconv.Atoi(node.Outputs.Output2.Connections[0].Node)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return fmt.Sprintf("if %s:\n    %s\nelse:\n    %s", node.Data.Condition, nodeVarName(thenId), nodeVarName(elseId))
-}
-
-func forGenerator(node Node) string {
-	return fmt.Sprintf("for i in range(%s,%s):\n    %s\n", node.Data.From, node.Data.Till, "print(\"Hello world\")")
+	text = fmt.Sprintf("substraction%v = %s - %s\n", node.ID, nodeVarName(id1), nodeVarName(id2))
+	return text
 }
 
 func nodeVarName(id int) string {
@@ -230,9 +241,67 @@ func nodeVarName(id int) string {
 		text = fmt.Sprintf("multiply%v", el.ID)
 	case "Df_number":
 		text = fmt.Sprintf("number%v", el.ID)
-	case "Df_print":
-		text = fmt.Sprintf("print(msg%v)", el.ID)
+	default:
+		text = ""
 	}
+	return text
+}
+
+func getSentenceCode(node Node) string {
+	text := ""
+
+	switch nodeType := node.HTML; nodeType {
+	case "Df_code":
+		text = node.Data.Value
+	case "Df_print":
+		text = fmt.Sprintf("print(\"%s\")", node.Data.Value)
+	default:
+		text = ""
+	}
+	return text
+}
+
+func condicionalGenerator(node Node) string {
+	var text string
+
+	if len(node.Outputs.Output1.Connections) <= 0 || len(node.Outputs.Output2.Connections) <= 0 {
+		text = fmt.Sprintf("if %s:\n    \nelse:\n    ", node.Data.Condition)
+		return text
+	}
+
+	thenId, err := strconv.Atoi(node.Outputs.Output1.Connections[0].Node)
+	if err != nil {
+		log.Fatal(err)
+	}
+	ifNode := getNodeById(thenId)
+
+	elseId, err := strconv.Atoi(node.Outputs.Output2.Connections[0].Node)
+	if err != nil {
+		log.Fatal(err)
+	}
+	elseNode := getNodeById(elseId)
+
+	text = fmt.Sprintf("if %s:\n    %s\nelse:\n    %s", node.Data.Condition, getSentenceCode(ifNode), getSentenceCode(elseNode))
+	return text
+}
+
+func forGenerator(node Node) string {
+	var text string
+
+	if len(node.Outputs.Output1.Connections) <= 0 {
+		text = fmt.Sprintf("for i in range(%s,%s):\n", node.Data.From, node.Data.Till)
+		return text
+	}
+
+	outputId, err := strconv.Atoi(node.Outputs.Output1.Connections[0].Node)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	nodeOutput := getNodeById(outputId)
+
+	text = fmt.Sprintf("for i in range(%s,%s):\n    %s\n", node.Data.From, node.Data.Till, getSentenceCode(nodeOutput))
+
 	return text
 }
 
