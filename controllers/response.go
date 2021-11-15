@@ -15,14 +15,27 @@ type NodeResponse struct {
 	Elapsed int64 `json:"elapsed"`
 }
 
+type DeleteNodeResponse struct {
+	Message string `json:"message"`
+}
+
 func NewNodeResponse(node *models.Node) *NodeResponse {
 	resp := &NodeResponse{Node: *node}
 	return resp
 }
 
 func (rd *NodeResponse) Render(w http.ResponseWriter, r *http.Request) error {
-	// Pre-processing before a response is marshalled and sent across the wire
-	rd.Elapsed = 10
+	return nil
+}
+
+func DeletedNodeResponse() *DeleteNodeResponse {
+	resp := &DeleteNodeResponse{
+		Message: "Node has been deleted",
+	}
+	return resp
+}
+
+func (rd *DeleteNodeResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
