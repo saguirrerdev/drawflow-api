@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/go-chi/render"
 	node "github.com/zebek95/draflow-api/controllers"
 	"github.com/zebek95/draflow-api/database"
-	"github.com/zebek95/draflow-api/error_handler"
 	"github.com/zebek95/draflow-api/models"
 )
 
@@ -60,31 +60,24 @@ func main() {
 			r.Use(NodeCtx)
 			r.Get("/", node.GetNode)
 			r.Get("/code", node.GetCode)
-			r.Put("/", node.UpdateNode)
 			r.Delete("/", node.DeleteNode)
 		})
 	})
 
-	http.ListenAndServe(":3333", r)
+	http.ListenAndServe(fmt.Sprintf(":%s", os.Getenv("API_PORT")), r)
 }
 
 func NodeCtx(next http.Handler) http.Handler {
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var node *models.Node
-		var err error
 
 		if nodeID := chi.URLParam(r, "nodeID"); nodeID != "" {
-			node, err = models.DbGetNode(nodeID)
-		} else {
-			render.Render(w, r, error_handler.ErrNotFound)
-			return
-		}
-		if err != nil {
-			render.Render(w, r, error_handler.ErrNotFound)
-			return
+			node = models.DbGetNode(nodeID)
 		}
 
 		ctx := context.WithValue(r.Context(), "node", node)
+
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

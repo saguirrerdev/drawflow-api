@@ -4,7 +4,6 @@ go 1.17
 
 require (
 	github.com/dgraph-io/dgo/v210 v210.0.0-20210825123656-d3f867fe9cc3
-	github.com/go-chi/chi v1.5.4
 	github.com/go-chi/chi/v5 v5.0.5
 	github.com/go-chi/cors v1.2.0
 	github.com/go-chi/render v1.0.1

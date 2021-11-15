@@ -1,24 +1,16 @@
 package node
 
 import (
-	"context"
 	"fmt"
-	"log"
 	"net/http"
 
-	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	"github.com/zebek95/draflow-api/error_handler"
 	"github.com/zebek95/draflow-api/models"
 )
 
 func ListNodes(w http.ResponseWriter, r *http.Request) {
-	nodes, err := models.DbGetNodes()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println(nodes)
+	nodes := models.DbGetNodes()
 
 	if err := render.RenderList(w, r, NewNodeListResponse(nodes.Node)); err != nil {
 		render.Render(w, r, error_handler.ErrRender(err))
@@ -26,32 +18,6 @@ func ListNodes(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// NodeCtx middleware is used to load an Node object from
-// the URL parameters passed through as the request. In case
-// the Node could not be found, we stop here and return a 404.
-func NodeCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var node *models.Node
-		var err error
-
-		if nodeID := chi.URLParam(r, "nodeID"); nodeID != "" {
-			node, err = models.DbGetNode(nodeID)
-		} else {
-			render.Render(w, r, error_handler.ErrNotFound)
-			return
-		}
-		if err != nil {
-			render.Render(w, r, error_handler.ErrNotFound)
-			return
-		}
-
-		ctx := context.WithValue(r.Context(), "node", node)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-// CreateNode persists the posted Node and returns it
-// back to the client as an acknowledgement.
 func CreateNode(w http.ResponseWriter, r *http.Request) {
 	data := &NodeRequest{}
 	if err := render.Bind(r, data); err != nil {
@@ -59,19 +25,13 @@ func CreateNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	node, err := models.DbNewNode(data.Node)
-	if err != nil {
-		log.Fatal(err)
-	}
+	node := models.DbNewNode(data.Node)
 
 	render.Status(r, http.StatusCreated)
 	render.Render(w, r, NewNodeResponse(node))
 }
 
 func GetNode(w http.ResponseWriter, r *http.Request) {
-	// Assume if we've reach this far, we can access the node
-	// context because this handler is a child of the NodeCtx
-	// middleware. The worst case, the recoverer middleware will save us.
 	node := r.Context().Value("node").(*models.Node)
 
 	if err := render.Render(w, r, NewNodeResponse(node)); err != nil {
@@ -80,32 +40,13 @@ func GetNode(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func UpdateNode(w http.ResponseWriter, r *http.Request) {
-	node := r.Context().Value("node").(*models.Node)
-
-	data := &NodeRequest{Node: node}
-	if err := render.Bind(r, data); err != nil {
-		render.Render(w, r, error_handler.ErrInvalidRequest(err))
-		return
-	}
-	node = data.Node
-	// models.DbUpdateNode(node.ID, node)
-
-	render.Render(w, r, NewNodeResponse(node))
-}
-
 func DeleteNode(w http.ResponseWriter, r *http.Request) {
-	var err error
 
 	node := r.Context().Value("node").(*models.Node)
 
-	// node, err = models.DbRemoveNode(node.ID)
-	if err != nil {
-		render.Render(w, r, error_handler.ErrInvalidRequest(err))
-		return
-	}
+	models.DbRemoveNode(node.Uid)
 
-	render.Render(w, r, NewNodeResponse(node))
+	render.Render(w, r, DeletedNodeResponse())
 }
 
 func init() {
