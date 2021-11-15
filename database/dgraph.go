@@ -28,19 +28,13 @@ func NewClient() {
 			log.Fatal(err)
 		}
 
-		// defer conn.Close()
-
 		Conn = dgo.NewDgraphClient(
 			api.NewDgraphClient(conn),
 		)
 
-		// if os.Getenv("ENVIRONMENT") == "development" {
-		// 	reset(Conn)
-		// }
-
 		SetSchema(Conn)
 	} else {
-		fmt.Printf("Dabase instance already defined")
+		fmt.Printf("Database instance already defined")
 	}
 }
 
