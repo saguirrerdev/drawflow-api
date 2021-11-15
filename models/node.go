@@ -22,7 +22,7 @@ type NodeResponse struct {
 	Node []Node `json:"node"`
 }
 
-func DbNewNode(node *Node) (*Node, error) {
+func DbNewNode(node *Node) *Node {
 	node.DType = append(node.DType, "Node")
 
 	nodejson, err := json.Marshal(node)
@@ -32,9 +32,8 @@ func DbNewNode(node *Node) (*Node, error) {
 
 	mu := &api.Mutation{
 		CommitNow: true,
+		SetJson:   nodejson,
 	}
-
-	mu.SetJson = nodejson
 
 	response, err := database.Conn.NewTxn().Mutate(context.Background(), mu)
 	if err != nil {
@@ -45,17 +44,14 @@ func DbNewNode(node *Node) (*Node, error) {
 	uid := response.GetUids()
 	key := keys[len(keys)-1]
 
-	obj, err := DbGetNode(uid[key.String()])
-	if err != nil {
-		log.Fatal(err)
-	}
+	obj := DbGetNode(uid[key.String()])
 
 	err = json.Unmarshal(response.Json, &obj)
 
-	return obj, nil
+	return obj
 }
 
-func DbGetNode(id string) (*Node, error) {
+func DbGetNode(id string) *Node {
 	params := map[string]string{"$id": id}
 
 	q := `
@@ -81,10 +77,10 @@ func DbGetNode(id string) (*Node, error) {
 		log.Fatal(err)
 	}
 
-	return &obj.Node[0], nil
+	return &obj.Node[0]
 }
 
-func DbGetNodes() (*NodeResponse, error) {
+func DbGetNodes() *NodeResponse {
 	const q = `
 		{
 			node(func: type(Node)){
@@ -109,5 +105,24 @@ func DbGetNodes() (*NodeResponse, error) {
 		log.Fatal(err)
 	}
 
-	return &obj, nil
+	return &obj
+}
+
+func DbRemoveNode(id string) {
+	params := map[string]string{"uid": id}
+
+	pb, err := json.Marshal(params)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	mu := &api.Mutation{
+		CommitNow:  true,
+		DeleteJson: pb,
+	}
+
+	_, err = database.Conn.NewTxn().Mutate(context.Background(), mu)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
