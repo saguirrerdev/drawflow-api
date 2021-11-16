@@ -13,7 +13,14 @@ Editor visual de nodos que permite crear programas simples y exportarlos a códi
 
 ## Instalación
 1. Clona este repositorio
-2. Abrir una terminal nueva en la raiz del proyecto y ejecutar ./draflow-api ó go run main.go
+2. Abrir una terminal nueva en la raiz del proyecto
+```
+go run main.go
+``` 
+ó
+```
+./draflow-api
+``` 
 3. Abre el navegador y entra a localhost:3333
 
 Contacto: saguirrer.dev@gmail.com
