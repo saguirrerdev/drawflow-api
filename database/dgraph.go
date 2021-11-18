@@ -18,8 +18,6 @@ func Init() {
 
 func NewClient() {
 	if Conn == nil {
-		fmt.Println("Creating new database connection")
-
 		conn, err := dgo.DialCloud(os.Getenv("DB_HOST"), os.Getenv("DB_ACCESS_KEY"))
 		if err != nil {
 			log.Fatal(err)

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -66,7 +67,13 @@ func main() {
 	fileServer := http.FileServer(http.Dir(filepath.Join(workDir, "app")))
 	r.Handle("/*", http.StripPrefix("/", fileServer))
 
-	http.ListenAndServe(":3333", r)
+	consoleMessage()
+
+	err := http.ListenAndServe(":3333", r)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 }
 
 func NodeCtx(next http.Handler) http.Handler {
@@ -82,4 +89,20 @@ func NodeCtx(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+func consoleMessage() {
+	fmt.Print(`Drawflow app is running
+	,_---~~~~~----._         
+  _,,_,*^____      _____¨*g*\"*, 
+ / __/ /'     ^.  /      \ ^@q f 
+[  @f | @))    |  | @))   l0 _/  
+ \/   \~____ / __ \_____/  \   
+  |           _l__l_         I   
+  }          [______]         I  
+  ]            | | |          |  
+  ]             ~ ~           |  
+  |                          |   
+  |                         |
+`)
 }
