@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -11,16 +11,17 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/render"
+	"github.com/joho/godotenv"
 	node "github.com/zebek95/draflow-api/controllers"
 	"github.com/zebek95/draflow-api/database"
 	"github.com/zebek95/draflow-api/models"
 )
 
 func init() {
-	os.Setenv("ENVIRONMENT", "development")
-	os.Setenv("API_PORT", "3333")
-	os.Setenv("DB_HOST", "localhost")
-	os.Setenv("DB_PORT", "9080")
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+	}
 
 	database.Init()
 }
@@ -65,7 +66,7 @@ func main() {
 	fileServer := http.FileServer(http.Dir(filepath.Join(workDir, "app")))
 	r.Handle("/*", http.StripPrefix("/", fileServer))
 
-	http.ListenAndServe(fmt.Sprintf(":%s", os.Getenv("API_PORT")), r)
+	http.ListenAndServe(":3333", r)
 }
 
 func NodeCtx(next http.Handler) http.Handler {

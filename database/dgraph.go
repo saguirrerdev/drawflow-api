@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/dgraph-io/dgo/v210"
 	"github.com/dgraph-io/dgo/v210/protos/api"
@@ -18,12 +19,8 @@ func Init() {
 func NewClient() {
 	if Conn == nil {
 		fmt.Println("Creating new database connection")
-		// d, err := grpc.Dial(fmt.Sprintf("%s:%s", os.Getenv("DB_HOST"), os.Getenv("DB_PORT")), grpc.WithInsecure())
-		// if err != nil {
-		// 	log.Fatal(err)
-		// }
 
-		conn, err := dgo.DialCloud("https://blue-surf-460029.us-east-1.aws.cloud.dgraph.io/graphql", "NzcxMTkwM2ZkYzhmMzFmNDliZTY0MWE4ODdjMDVlYmQ=")
+		conn, err := dgo.DialCloud(os.Getenv("DB_HOST"), os.Getenv("DB_ACCESS_KEY"))
 		if err != nil {
 			log.Fatal(err)
 		}
