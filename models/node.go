@@ -47,6 +47,9 @@ func DbNewNode(node *Node) *Node {
 	obj := DbGetNode(uid[key.String()])
 
 	err = json.Unmarshal(response.Json, &obj)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	return obj
 }
